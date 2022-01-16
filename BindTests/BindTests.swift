@@ -46,7 +46,7 @@ class BindTests: XCTestCase {
         }
         
         waitForExpectations(timeout: 10) { (e:Error?) in
-            print(e)
+            print(e ?? "nil")
         }
     }
 }

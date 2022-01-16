@@ -9,10 +9,14 @@ import UIKit
 
 class ViewController: UITableViewController {
 
+    override required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        title = "Filter"
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        title = "Filter"
-        // Do any additional setup after loading the view.
+        
     }
 
 

@@ -7,8 +7,7 @@ target 'Bind' do
 
   # Pods for Bind
   pod 'Alamofire', '~> 5.5'
-  pod 'p2.OAuth2', '~> 5.3'
-  
+
   target 'BindTests' do
     inherit! :search_paths
     # Pods for testing

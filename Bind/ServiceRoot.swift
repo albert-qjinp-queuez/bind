@@ -8,7 +8,15 @@
 import UIKit
 import Alamofire
 
+protocol ServiceDelegate: AnyObject {
+    func imageLoaded(index: Int)
+}
+
 class ServiceRoot {
+    weak var delegate: ServiceDelegate?
+    
+    static let shared = ServiceRoot()
+    
     struct OAuthResponse: Decodable{
         var access_token: String?
     }
@@ -17,6 +25,11 @@ class ServiceRoot {
     var oauthBearerToken: String?
     
     private static let oauthBearerTokenKey = "oauthBearerTokenKey"
+    
+    var dataRoot = DataRoot()
+    
+    var imageServices = [Request]()
+    var imageQueue = [AnimalData]()
     
     init() {
         oauthBearerToken = UserDefaults.standard.object(forKey: ServiceRoot.oauthBearerTokenKey) as? String
@@ -52,14 +65,64 @@ class ServiceRoot {
         }
     }
     
-    func findPet(_  completion :@escaping (Any?)->()) {
+    func findPet(depth: Int = 0,_  completion :@escaping (Any?)->()) {
         oAuth { _ in
+            
+            self.dataRoot.animals.removeAll()
+            self.imageServices.removeAll()
+            self.imageQueue.removeAll()
+            
             AF.request( self.baseURL.appending("/animals")
                         , headers: ["Authorization": "Bearer \(self.oauthBearerToken ?? "" )"]
             )
+                .responseString(completionHandler: { (r: AFDataResponse<String>) in
+                    print(r)
+                })
                 .responseDecodable(of: Animals.self) { (r: DataResponse<Animals, AFError>) in
+                    if r.response?.statusCode == 401,
+                       depth < 2 {
+                        self.oauthBearerToken = nil
+                        self.findPet(depth:depth + 1, completion)
+                        return
+                    }
+                    let animalDatas = r.value?.animals.map({ (animal:Animal) in
+                        AnimalData(animal)
+                    })
+                    
+                    self.dataRoot.animals.append(contentsOf: animalDatas ?? [] )
+                    self.imageQueue.append(contentsOf: animalDatas?.reversed() ?? [])
+                    self.loadMainImages()
                     completion(r)
+                    
                 }
+        }
+    }
+    
+    func loadMainImages() {
+        let maxWindow = 5
+        while imageServices.count < maxWindow,
+              imageQueue.count > 0 {
+            let animal = imageQueue.popLast()
+            if animal != nil,
+               let imageURL = animal?.animal.photos.first?.values.first {
+                let request = AF.request(imageURL)
+                request.responseData { (imageData: AFDataResponse<Data>) in
+                    self.imageServices.removeAll {
+                        return $0 == request
+                    }
+                    self.loadMainImages()
+                    
+                    guard let data = imageData.value,
+                          let image = UIImage(data: data) else {
+                        return
+                    }
+                    animal?.mainImage = image.resizableImage(withCapInsets: UIEdgeInsets.zero)
+                    if let index = self.dataRoot.animals.firstIndex(where: { $0 === animal }) {
+                        self.delegate?.imageLoaded(index: index)
+                    }
+                }
+                imageServices.append(request)
+            }
         }
     }
 }

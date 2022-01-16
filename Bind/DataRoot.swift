@@ -9,6 +9,7 @@ import UIKit
 
 class AnimalData {
     var mainImage: UIImage?
+    var morePhotos = [UIImage]()
     let animal: Animal
     init(_ animal: Animal) {
         self.animal = animal

@@ -13,9 +13,12 @@ protocol ServiceDelegate: AnyObject {
 }
 
 class ServiceRoot {
+    var isServiceDirty = true
     weak var delegate: ServiceDelegate?
     
     static let shared = ServiceRoot()
+    
+    
     
     struct OAuthResponse: Decodable{
         var access_token: String?
@@ -103,8 +106,9 @@ class ServiceRoot {
         while imageServices.count < maxWindow,
               imageQueue.count > 0 {
             let animal = imageQueue.popLast()
+            let imageURL = animal?.animal.photos.first?["small"] ?? animal?.animal.photos.first?.values.first
             if animal != nil,
-               let imageURL = animal?.animal.photos.first?.values.first {
+               let imageURL = imageURL {
                 let request = AF.request(imageURL)
                 request.responseData { (imageData: AFDataResponse<Data>) in
                     self.imageServices.removeAll {
@@ -122,6 +126,27 @@ class ServiceRoot {
                     }
                 }
                 imageServices.append(request)
+            }
+        }
+    }
+    
+    func getBigImage(_ animal: AnimalData, completion:@escaping ([UIImage])->() ) {
+        var counter = animal.animal.photos.count
+        var images = [UIImage]()
+        for image in animal.animal.photos {
+            let url = image["full"] ?? image.values.first
+            if let url = url {
+                AF.request(url).responseData { (data: AFDataResponse<Data>) in
+                    counter = counter - 1
+                    if let imageData = data.value,
+                       let image = UIImage(data: imageData) {
+                        images.append(image)
+                        animal.morePhotos.append(image)
+                    }
+                    if counter == 0 {
+                        completion(images)
+                    }
+                }
             }
         }
     }

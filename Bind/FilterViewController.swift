@@ -7,18 +7,14 @@
 
 import UIKit
 
-class ViewController: UITableViewController {
-
-    override required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        title = "Filter"
-    }
+class FilterViewController: UITableViewController {
+    let service = ServiceRoot.shared
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
     }
 
+    
 
 }
 

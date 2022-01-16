@@ -1,0 +1,6 @@
+framework module Pods_BindTests {
+  umbrella header "Pods-BindTests-umbrella.h"
+
+  export *
+  module * { export * }
+}

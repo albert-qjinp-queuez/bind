@@ -78,9 +78,6 @@ class ServiceRoot {
             AF.request( self.baseURL.appending("/animals")
                         , headers: ["Authorization": "Bearer \(self.oauthBearerToken ?? "" )"]
             )
-                .responseString(completionHandler: { (r: AFDataResponse<String>) in
-                    print(r)
-                })
                 .responseDecodable(of: Animals.self) { (r: DataResponse<Animals, AFError>) in
                     if r.response?.statusCode == 401,
                        depth < 2 {
@@ -110,6 +107,7 @@ class ServiceRoot {
             if animal != nil,
                let imageURL = imageURL {
                 let request = AF.request(imageURL)
+                imageServices.append(request)
                 request.responseData { (imageData: AFDataResponse<Data>) in
                     self.imageServices.removeAll {
                         return $0 == request
@@ -125,7 +123,6 @@ class ServiceRoot {
                         self.delegate?.imageLoaded(index: index)
                     }
                 }
-                imageServices.append(request)
             }
         }
     }
